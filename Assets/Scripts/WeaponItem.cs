@@ -10,6 +10,7 @@ public class WeaponItem : Item
     public AmmoType ammoType;
     public int maxAmmo;
 }
+
 public enum AmmoType
 {
     _7_62MM,

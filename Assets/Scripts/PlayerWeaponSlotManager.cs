@@ -4,20 +4,20 @@ using UnityEngine;
 
 public class PlayerWeaponSlotManager : MonoBehaviour
 {
-    private WeaponSlot rightHandSlot;
+    private WeaponSlot _rightHandSlot;
 
     private void Awake()
     {
-        rightHandSlot = GetComponentInChildren<WeaponSlot>();
+        _rightHandSlot = GetComponentInChildren<WeaponSlot>();
     }
 
     public void LoadWeaponOnSlot(WeaponItem weaponItem)
     {
-        rightHandSlot.LoadWeaponModel(weaponItem);
+        _rightHandSlot.LoadWeaponModel(weaponItem);
     }
 
     public void UnLoadWeaponOnSlot()
     {
-        rightHandSlot.UnloadWeaponAndDestroy();
+        _rightHandSlot.UnloadWeaponAndDestroy();
     }
 }

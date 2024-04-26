@@ -6,13 +6,13 @@ public class WeaponSlot : MonoBehaviour
 {
     public Transform parentOverride;
     public WeaponItem currentWeapon;
-    GameObject currentWeaponModel;
+    private GameObject _currentWeaponModel;
 
     public void UnloadWeaponAndDestroy()
     {
-        if (currentWeaponModel != null)
+        if (_currentWeaponModel)
         {
-            Destroy(currentWeaponModel);
+            Destroy(_currentWeaponModel);
         }
 
         currentWeapon = null;
@@ -23,9 +23,9 @@ public class WeaponSlot : MonoBehaviour
         UnloadWeaponAndDestroy();
 
         GameObject model = Instantiate(weaponItem.modelPrefab);
-        if (model != null)
+        if (model)
         {
-            if (parentOverride != null)
+            if (parentOverride)
             {
                 model.transform.parent = parentOverride;
             }
@@ -38,7 +38,7 @@ public class WeaponSlot : MonoBehaviour
             model.transform.localRotation = Quaternion.identity;
             model.transform.localScale = Vector3.one;
         }
-        currentWeaponModel = model;
+        _currentWeaponModel = model;
         currentWeapon = weaponItem;
     }
 }
