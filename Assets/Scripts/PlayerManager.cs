@@ -4,30 +4,22 @@ using UnityEngine.Animations.Rigging;
 
 public class PlayerManager : MonoBehaviour
 {
+    [SerializeField] private InputReader input;
     #region PRIVATE_VARIABLES
 
     private Animator _animator;
     private PlayerWeaponSlotManager _playerWeaponSlotManager;
-
-    private bool _inputAlpha1;
-    private bool _inputF;
-    private bool _inputR;
-    private bool _inputSpace;
-    
-    private bool _inputLeftMouseDown;
-    private bool _inputLeftMouseUp;
-    private bool _inputLeftMouseStay;
     
     #endregion
     
     #region PUBLIC_VARIABLES
     
     [Header("MOVEMENT")]
-    public float moveInput;
+    public float moveInputValue;
+    private Vector2 _movementInput;
 
-    
 
-    [Header("FLAGS")]
+    [Header("FLAGS")] 
     public bool isSprinting;
     public bool isHoldingRifle;
     public bool isHoldingSword;
@@ -57,108 +49,77 @@ public class PlayerManager : MonoBehaviour
     private static readonly int IsFiring = Animator.StringToHash("IsFiring");
 
     #endregion
+    
     private void Awake()
     {
         _animator = GetComponent<Animator>();
         _playerWeaponSlotManager = GetComponent<PlayerWeaponSlotManager>();
     }
+    private void Start()
+    {
+        input.MoveEvent += SetMovementValue;
+        input.JumpEvent += Jump;
+        input.StartRunEvent += StartRun;
+        input.StopRunEvent += StopRun;
+
+        input.StartAimEvent += StartAiming;
+        input.StopAimEvent += StopAiming;
+        input.StartFireEvent += StartFire;
+        input.StopFireEvent += StopFire;
+        
+        input.ReloadEvent += Reload;
+        input.ThrowGrenadeEvent += ThrowGrenade;
+
+        input.MainWeaponEvent += ChangeMainWeapon;
+    }
     private void Update()
     {
-        HandleAllPlayerActions();
-    }
-
-    private void HandleAllPlayerActions()
-    {
-        HandleAllInputsAndFlags();
-
-        HandleMovement();
-        HandleJumpInput();
-
-        HandleChangeWeapon();
-        HandleThrowGrenade();
-
-        HandleAiming();
-        HandleReloading();
-        HandleFiring();
-
+        Move();
+        HandleFlags();
         HandleRigs();
     }
-    private void HandleAllInputsAndFlags()
+
+    private void HandleFlags()
     {
-        moveInput = Mathf.Max(Input.GetAxis("Vertical"), 0);
-        isSprinting = Input.GetKey(KeyCode.LeftShift) && moveInput > 0.5f;
-
-
         isHandlingWeapon = _animator.GetBool(IsHandlingWeapon);
         isJumping = _animator.GetBool(IsJumping);
-
-        _inputAlpha1 = Input.GetKeyDown(KeyCode.Alpha1);
-        
-        _inputF = Input.GetKeyDown(KeyCode.R);
-        _inputR = Input.GetKeyDown(KeyCode.R);
-        _inputSpace = Input.GetKeyDown(KeyCode.Space);
-
-        _inputLeftMouseUp = Input.GetMouseButtonUp(1);
-        _inputLeftMouseDown = Input.GetMouseButtonDown(1);
-        _inputLeftMouseStay = Input.GetMouseButton(1);
     }
-    private void HandleMovement()
+    
+    private void Move()
     {
+        moveInputValue = Mathf.Max(_movementInput.y, 0);
+        
         if (isSprinting && !isHandlingWeapon)
         {
-            moveInput = 2;
+            moveInputValue = 2;
         }
-
-        _animator.SetFloat(Vertical, moveInput, 0.1f, Time.deltaTime);
-    }
-    private void HandleChangeWeapon()
-    {
-        if (isJumping) return;
-
-        if (_inputAlpha1)
-        {
-            if (currentWeapon == CurrentWeapon.Rifle)
-            {
-                currentWeapon = CurrentWeapon.None;
-                _animator.CrossFade("Rifle Put Away", 0.1f);
-            }
-            else
-            {
-                currentWeapon = CurrentWeapon.Rifle;
-                _animator.CrossFade("Rifle Pull Out", 0.1f);
-                _playerWeaponSlotManager.LoadWeaponOnSlot(rifleM4A1);
-            }
-
-        }
-        //if (Input.GetKeyDown(KeyCode.Alpha2))
-        //{
-        //    if (currentWeapon == CurrentWeapon.Sword)
-        //    {
-        //        currentWeapon = CurrentWeapon.None;
-        //    }
-        //    else
-        //    {
-        //        currentWeapon = CurrentWeapon.Sword;
-        //    }
-        //}
-
-        isHoldingRifle = currentWeapon == CurrentWeapon.Rifle;
-        //isHoldingSword = currentWeapon == CurrentWeapon.Sword;
-
-        _animator.SetBool(IsHoldingRifle, isHoldingRifle); 
-        //animator.SetBool("IsHoldingSword", isHoldingSword);
-    }
-    private void HandleJumpInput()
-    {
-        if (!_inputSpace || isJumping || isHandlingWeapon) return;
         
+        _animator.SetFloat(Vertical, moveInputValue, 0.1f, Time.deltaTime);
+    }
+    private void SetMovementValue(Vector2 movementInput)
+    {
+        _movementInput = movementInput;
+    }
+
+    private void StartRun()
+    {
+        isSprinting = true;
+    }
+    private void StopRun()
+    {
+        isSprinting = false;
+    }
+    private void Jump()
+    {
+        if (isJumping || isHandlingWeapon) return;
+
         switch (currentWeapon)
         {
             case CurrentWeapon.None:
-                _animator.CrossFade(moveInput > 0.5f ? "Move Jump" : "Idle Jump", 0.1f);
+                _animator.CrossFade(moveInputValue > 0.5f ? "Move Jump" : "Idle Jump", 0.1f);
                 break;
             case CurrentWeapon.Rifle:
-                _animator.CrossFade(moveInput > 0.5f ? "Rifle Move Jump" : "Rifle Idle Jump", 0.1f);
+                _animator.CrossFade(moveInputValue > 0.5f ? "Rifle Move Jump" : "Rifle Idle Jump", 0.1f);
                 break;
             case CurrentWeapon.Sword:
                 break;
@@ -166,54 +127,70 @@ public class PlayerManager : MonoBehaviour
                 throw new ArgumentOutOfRangeException();
         }
     }
-    private void HandleThrowGrenade()
+    
+    private void ChangeMainWeapon()
     {
-        if (currentWeapon != CurrentWeapon.None  || isJumping || isHandlingWeapon) return;
+        if (isJumping) return;
 
-        if (_inputR)
+        if (currentWeapon == CurrentWeapon.Rifle)
         {
-            _animator.CrossFade("Throw Grenade", 0.1f);
-        }
-    }
-    private void HandleReloading()
-    {
-        if (currentWeapon != CurrentWeapon.Rifle || isJumping || isHandlingWeapon) return;
-
-        if (_inputF)
-        {
-            _animator.CrossFade("Reload", 0.1f);
-        }
-    }
-    private void HandleAiming()
-    {
-        if (currentWeapon == CurrentWeapon.Rifle && !isJumping && !isHandlingWeapon)
-        {
-            isAiming = _inputLeftMouseDown;
+            currentWeapon = CurrentWeapon.None;
+            _animator.CrossFade("Rifle Put Away", 0.1f);
         }
         else
         {
-            isAiming = false;
+            currentWeapon = CurrentWeapon.Rifle;
+            _animator.CrossFade("Rifle Pull Out", 0.1f);
+            _playerWeaponSlotManager.LoadWeaponOnSlot(rifleM4A1);
         }
 
+        isHoldingRifle = currentWeapon == CurrentWeapon.Rifle;
+
+        _animator.SetBool(IsHoldingRifle, isHoldingRifle); 
+    }
+    private void ThrowGrenade()
+    {
+        if (currentWeapon != CurrentWeapon.None  || isJumping || isHandlingWeapon) return;
+
+        _animator.CrossFade("Throw Grenade", 0.1f);
+    }
+    private void Reload()
+    {
+        if (currentWeapon != CurrentWeapon.Rifle || isJumping || isHandlingWeapon) return;
+
+        _animator.CrossFade("Reload", 0.1f);
+    }
+    
+    private void StartAiming()
+    {
+        if (currentWeapon != CurrentWeapon.Rifle || isJumping || isHandlingWeapon) return;
+        
+        isAiming = true;
         _animator.SetBool(IsAiming, isAiming);
     }
-    private void HandleFiring()
+    private void StopAiming()
+    {
+        isAiming = false;
+        _animator.SetBool(IsAiming, isAiming);
+    }
+    private void StartFire()
+    {
+        if (currentWeapon != CurrentWeapon.Rifle || isJumping || isHandlingWeapon || !isAiming) return;
+        
+        isFiring = true;
+        _animator.CrossFade("Fire", 0.1f);
+        
+        _animator.SetBool(IsFiring, isFiring);
+    }
+    private void StopFire()
     {
         if (currentWeapon != CurrentWeapon.Rifle || isJumping || isHandlingWeapon || !isAiming) return;
 
-        if (_inputLeftMouseDown) 
-        { 
-            isFiring = true;
-
-            _animator.CrossFade("Fire", 0.1f);
-        }
-        if (_inputLeftMouseUp)
-        {
-            isFiring = false;
-        }
-
+        isFiring = false;
+        
         _animator.SetBool(IsFiring, isFiring);
     }
+    
     private void HandleRigs()
     {
         if (!isHandlingWeapon && isHoldingRifle)

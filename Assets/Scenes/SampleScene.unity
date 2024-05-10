@@ -2598,7 +2598,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eaa85b4176e4269418f2a4f21a6b6843, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveInput: 0
+  input: {fileID: 11400000, guid: 422fe924132a2e74c976e8f025bedca6, type: 2}
+  moveInputValue: 0
   isSprinting: 0
   isHoldingRifle: 0
   isHoldingSword: 0
@@ -2607,8 +2608,8 @@ MonoBehaviour:
   isAiming: 0
   isFiring: 0
   currentWeapon: 0
-  rifle_AK47: {fileID: 0}
-  rifle_M4A1: {fileID: 11400000, guid: a9f952f7841b0bb44a00c8125e854ebc, type: 2}
+  rifleAk47: {fileID: 0}
+  rifleM4A1: {fileID: 11400000, guid: a9f952f7841b0bb44a00c8125e854ebc, type: 2}
   leftHandAimingRig: {fileID: 810569242}
   leftHandMovingRig: {fileID: 0}
 --- !u!114 &7230861223855748777

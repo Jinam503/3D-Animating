@@ -25,14 +25,7 @@ public class WeaponSlot : MonoBehaviour
         GameObject model = Instantiate(weaponItem.modelPrefab);
         if (model)
         {
-            if (parentOverride)
-            {
-                model.transform.parent = parentOverride;
-            }
-            else
-            {
-                model.transform.parent = transform;
-            }
+            model.transform.parent = parentOverride ? parentOverride : transform;
 
             model.transform.localPosition = Vector3.zero;
             model.transform.localRotation = Quaternion.identity;
